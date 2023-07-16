@@ -6,6 +6,10 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    linx-server = {
+	url = "github:badboy/linx-server/convert-video-files";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs = { self, nixpkgs, flake-utils, nixos-generators, ... }@attrs: 
     # Create system-specific outputs for lima systems
