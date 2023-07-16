@@ -63,7 +63,6 @@ cleanup-every-minutes = 60
   services.nginx = {
     enable = true;
     virtualHosts."localhost" = {
-      serverAliases = [ "localhost" ];
       default = true;
       http2 = true;
       root = "/srv/www/localhost";
@@ -75,11 +74,19 @@ cleanup-every-minutes = 60
         proxy_set_header X-Forwarded-For $remote_addr;
         proxy_set_header X-Forwarded-Proto $scheme;
 
-        # by default nginx times out connections in one minute
         proxy_read_timeout 1d;
         proxy_redirect off;
 	'';
-      };
     };
+    virtualHosts."p.localhost" = {
+      http2 = true;
+      serverAliases = [ "*.localhost" ];
+      root = "/srv/www/localhost";
+      locations."/".extraConfig = ''
+        default_type text/html;
+        return 200 'hello world!\n';
+      '';
+    };
+  };
 
 }
