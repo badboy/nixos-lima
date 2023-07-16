@@ -1,34 +1,66 @@
 { config, modulesPath, pkgs, lib, ... }:
 {
-    imports = [
-        (fetchTarball {
-            url = "https://github.com/msteen/nixos-vscode-server/tarball/master";
-            sha256 = "1qga1cmpavyw90xap5kfz8i6yz85b0blkkwvl00sbaxqcgib2rvv";
-        })
-    ];
+    system.stateVersion = "23.05";
 
-    services.vscode-server.enable = true;
-    # still requires systemctl --user enable auto-fix-vscode-server.service
-    # systemctl --user start auto-fix-vscode-server.service
     environment.systemPackages = with pkgs; [
         htop
-        lsd
-        fd
-        bat
-        fzf
-        zoxide
-        jq
-        yq
-        fish
-        starship
+        ripgrep
     ];
 
-    programs.fish.enable = true;
-
-    users.users.josh = {
-        shell = "/run/current-system/sw/bin/fish";
+    users.users.jer = {
+        shell = "/run/current-system/sw/bin/bash";
         isNormalUser = true;
         group = "users";
-        home = "/home/josh.linux";
-    }; # Settings need to be specified here too so folders aren't overwritten/wiped
+        home = "/home/jer.linux";
+    };
+
+    systemd.services.pasta =
+      let
+        config = pkgs.writeText "server.conf" ''
+bind = 127.0.0.1:4333
+sitename = pasta
+#siteurl = http://p.fnordig.de/
+maxsize = 1048576000 # 1 Gb
+maxexpiry = 2419200 # 4 weeks
+
+remoteuploads = false
+nologs = false
+force-random-filename = false
+
+realip = true
+cleanup-every-minutes = 60
+        '';
+      in
+    {
+      description = "linx-server";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network-online.target" ];
+
+      path = with pkgs; [
+        linx-server
+      ];
+
+      script = ''
+        cd $STATE_DIRECTORY || exit 1
+        ${pkgs.linx-server}/bin/linx-server -config ${config}
+      '';
+
+      serviceConfig = {
+        DynamicUser = true;
+        Restart = "always";
+        StateDirectory = "pasta";
+      };
+    };
+
+  services.nginx = {
+    enable = true;
+    virtualHosts."localhost" = {
+      serverAliases = [ "localhost" ];
+      default = true;
+      http2 = true;
+      root = "/srv/www/localhost";
+      locations."/".proxyPass = "http://localhost:4333";
+    };
+  };
+
 }

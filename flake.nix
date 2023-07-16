@@ -28,7 +28,7 @@
         };
       }) // { 
         nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux"; # doesn't play nice with each system :shrug:
+          system = "x86_64-linux"; # doesn't play nice with each system :shrug:
           specialArgs = attrs;
           modules = [
             ./lima.nix
